@@ -4,10 +4,15 @@ MODULES="/data/data/com.termux/files/usr/share/ducknexus/modules"
 if [[ "$(ls $MODULES 2>/dev/null)" = "" ]]; then
   mkdir -p $MODULES
 fi
-
+if [[ "$(termux-fingerprint | jq -r '.auth_result')" = "AUTH_RESULT_SUCCESS" ]]; then
+termux-toast "Unlocked."
+elif [[ "$(termux-fingerprint | jq -r '.auth_result')" != "AUTH_RESULT_SUCCESS" ]]; then
+exit 0
+elif [[ "$(termux-fingerprint | jq -r '.errors')" = "ERROR_NO_ENROLLED_FINGERPRINTS" ]]; then
+echo ""
+fi
 echo "Duck Nexus ONE" | lolcat
 echo "Make sure you have the following apps installed: UniMote, Mi Remote (required only in IR supported phones), Screen Mirroring - TV Miracast, PandwaRF, DroidSheep, PentestKit Mobile, Bluetooth LE Spam, WPSApp and Termux-API (with all permissions granted)."
-
 read -p "Home
 [1] TV Remote Control (WiFi Required)
 [2] Universal Device Remote Control (IR Required)
@@ -37,6 +42,8 @@ read -p "Home
 [26] AndroControl (Internet Required)
 [27] Scan for ScreenStream vulnerable devices (Internet Required)
 [28] Try to catch a IP behind a VPN (Internet Required)
+[29] Monitor a website (Internet Required)
+[30] Basic vulnerability scan on a website (Internet Required)
 Your choice: " choice
 if [[ "$choice" = "1" ]]; then
   am start -n sensustech.universal.tv.remote.control/sensustech.universal.tv.remote.control.activities.SplashActivity
@@ -198,5 +205,44 @@ echo "This IP is behind the Tor network."
 else
 echo "No VPN/Proxy detected."
 fi
+fi
+elif [[ "$choice" = "29" ]]; then
+read -p "Website: " url
+printed=0
+
+echo "Monitoring $url..."
+
+while true; do
+    response=$(curl -s -o /dev/null -w "%{http_code}" --head "$url")
+    if [[ $response == "200" || $response == "301" || $response == "302" ]]; then
+        if [ $printed -eq 0 ]; then
+            echo "Website is up."
+            printed=1
+        fi
+    elif [[ $response != "200" && $response != "301" && $response != "302" && $printed -ne 2 ]]; then
+        echo "Website is down."
+        printed=2
+    fi
+    sleep 5
+done
+elif [[ "$choice" = "30" ]]; then
+echo "Trying Directory Traversal in $1"
+traverse=$(curl -s $1/../../../etc/passwd%00 | grep "root:x:0:0:root:/root:/bin/bash")
+if [[ "$traverse" = "" ]]; then
+echo "Directory Traversal not detected. Skipping to next vulnerability (XSS)..."
+else
+echo "Directory Traversal detected in $1/../../../etc/passwd%00"
+fi
+xss=$(curl -s $1 | grep "innerHTML")
+if [[ "$xss" = "" ]]; then
+echo 'XSS not detected. Skipping to next vulnerability (SQLi)...'
+else
+echo "XSS detected in $1"
+fi
+sqli=$(curl -sL "$1'" | grep "SQL Syntax")
+if [[ "$sqli" = "" ]]; then
+echo "SQLi not detected."
+else
+echo "SQLi detected in $1'"
 fi
 fi
