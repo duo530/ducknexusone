@@ -1,4 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/bash
+# test
 termux-wake-lock
 MODULES="/data/data/com.termux/files/usr/share/ducknexus/modules"
 if [[ "$(ls $MODULES 2>/dev/null)" = "" ]]; then
