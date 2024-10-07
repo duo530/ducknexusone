@@ -12,7 +12,8 @@ elif [[ "$(termux-fingerprint | jq -r '.errors')" = "ERROR_NO_ENROLLED_FINGERPRI
 echo ""
 fi
 echo "Duck Nexus ONE" | lolcat
-echo "Make sure you have the following apps installed: UniMote, Mi Remote (required only in IR supported phones), Screen Mirroring - TV Miracast, PandwaRF, DroidSheep, PentestKit Mobile, Bluetooth LE Spam, WPSApp and Termux-API (with all permissions granted)."
+echo "Make sure you have the following apps installed: UniMote, Mi Remote (required only in IR supported phones), Screen Mirroring - TV Miracast, PandwaRF, DroidSheep, PentestKit Mobile, Bluetooth LE Spam, WPSApp, Termux-API (with all permissions granted) and Universal TV Remote Control."
+while true; do
 read -p "Home
 [1] TV Remote Control (WiFi Required)
 [2] Universal Device Remote Control (IR Required)
@@ -44,6 +45,8 @@ read -p "Home
 [28] Try to catch a IP behind a VPN (Internet Required)
 [29] Monitor a website (Internet Required)
 [30] Basic vulnerability scan on a website (Internet Required)
+[31] HorSec Webserver
+[32] TV Remote control v2 (better) (IR & Internet Required)
 Your choice: " choice
 if [[ "$choice" = "1" ]]; then
   am start -n sensustech.universal.tv.remote.control/sensustech.universal.tv.remote.control.activities.SplashActivity
@@ -226,23 +229,38 @@ while true; do
     sleep 5
 done
 elif [[ "$choice" = "30" ]]; then
-echo "Trying Directory Traversal in $1"
-traverse=$(curl -s $1/../../../etc/passwd%00 | grep "root:x:0:0:root:/root:/bin/bash")
+read -p "Website: " website
+echo "Trying Directory Traversal in $website"
+traverse=$(curl -s $website/../../../etc/passwd%00 | grep "root:x:0:0:root:/root:/bin/bash")
 if [[ "$traverse" = "" ]]; then
 echo "Directory Traversal not detected. Skipping to next vulnerability (XSS)..."
 else
-echo "Directory Traversal detected in $1/../../../etc/passwd%00"
+echo "Directory Traversal detected in $website/../../../etc/passwd%00"
 fi
-xss=$(curl -s $1 | grep "innerHTML")
+xss=$(curl -s $website | grep "innerHTML")
 if [[ "$xss" = "" ]]; then
 echo 'XSS not detected. Skipping to next vulnerability (SQLi)...'
 else
-echo "XSS detected in $1"
+echo "XSS detected in $website"
 fi
-sqli=$(curl -sL "$1'" | grep "SQL Syntax")
+sqli=$(curl -sL "$website'" | grep "SQL Syntax")
 if [[ "$sqli" = "" ]]; then
 echo "SQLi not detected."
 else
-echo "SQLi detected in $1'"
+echo "SQLi detected in $website'"
 fi
+elif [[ "$choice" = "31" ]]; then
+read -p "Port: " port
+read -p "Index file: " index
+input=$index
+length=$(wc -c $index | sed s/$input//g)
+length2=$(expr $length - 1)
+content=$(cat $index)
+reply=$(echo -e "HTTP/1.1 200 OK\r\nAccept-Ranges: bytes\r\nContent-Type: text/html; charset=UTF-8\r\nDate: $(date)\r\nServer: HorSec Webserv\r\nContent-Length: $length2\r\n\r\n$content\r\n")
+while true; do
+echo "$reply" | nc -nlp $port -q 0 -vvvvvv -k
+done
+elif [[ "$choice" = "32" ]]; then
+am start -n codematics.universal.tv.remote.control/codematics.universal.tv.remote.control.activities._LogoScreen
 fi
+done
