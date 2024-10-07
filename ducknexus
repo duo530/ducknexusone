@@ -131,7 +131,7 @@ elif [[ "$choice" = "19" ]]; then
   termux-nfc -w "$info1"
 elif [[ "$choice" = "20" ]]; then
   read -p "Text to code: " text
-  text0=$(echo "$text" | shasum)
+  text0=$(echo "$text" | sha1sum)
   text1=$(echo "$text0" | md5sum)
   text2=$(echo "$text1" | sha224sum)
   text3=$(echo "$text2" | sha256sum)
